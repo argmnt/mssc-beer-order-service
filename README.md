@@ -1,8 +1,7 @@
-[![CircleCI](https://circleci.com/gh/springframeworkguru/mssc-beer-order-service.svg?style=svg)](https://circleci.com/gh/springframeworkguru/mssc-beer-order-service)
 
 # MSSC Beer Order Service
 
-This repository contains source code examples used to support my on-line courses about the Spring Framework.
+This repository taken from Spring Guru's project and exists here for training purposes.
 
 You can learn more about the courses here:
 * [Spring Boot Microservices with Spring Cloud](https://www.udemy.com/spring-boot-microservices-with-spring-cloud-beginner-to-guru/?couponCode=GIT_HUB2)
