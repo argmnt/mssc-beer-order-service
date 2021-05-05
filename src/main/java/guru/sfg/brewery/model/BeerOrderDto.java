@@ -48,6 +48,6 @@ public class BeerOrderDto{
     private UUID customerId;
     private String customerRef;
     private List<BeerOrderLineDto> beerOrderLines;
-    private OrderStatusEnum orderStatus;
+    private String orderStatus;
     private String orderStatusCallbackUrl;
 }

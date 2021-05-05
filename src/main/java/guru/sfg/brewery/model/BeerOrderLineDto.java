@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -46,6 +47,8 @@ public class BeerOrderLineDto {
 
     private String upc;
     private String beerName;
+    private String beerStyle;
     private UUID beerId;
     private Integer orderQuantity = 0;
+    private BigDecimal price;
 }

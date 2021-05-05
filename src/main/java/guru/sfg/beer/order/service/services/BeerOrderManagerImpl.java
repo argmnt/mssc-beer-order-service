@@ -12,6 +12,9 @@ import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @Service
 public class BeerOrderManagerImpl implements BeerOrderManager {
@@ -30,6 +33,23 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
         sendBeerOrderEvent(savedBeerOrder, BeerOrderEventEnum.VALIDATE_ORDER);
         return savedBeerOrder;
+    }
+
+    @Override
+    public void processValidationResult(UUID beerOrderId, Boolean isValid) {
+        Optional<BeerOrder> optionalBeerOrder = beerOrderRepository.findById(beerOrderId);
+        BeerOrder beerOrder = optionalBeerOrder.orElseThrow(RuntimeException::new);
+
+        if (isValid) {
+            sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.VALIDATION_PASSED);
+            //Note: above the state machine automatically update new state of beerOrder with new state via interceptor
+            //that's why we need to get new version from db.
+            Optional<BeerOrder> optionalUpdatedBeerOrder = beerOrderRepository.findById(beerOrderId);
+            BeerOrder updatedBeerOrder = optionalBeerOrder.orElseThrow(RuntimeException::new);
+            sendBeerOrderEvent(updatedBeerOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
+        } else {
+            sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
+        }
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEventEnum) {
