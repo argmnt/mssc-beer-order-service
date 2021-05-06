@@ -32,8 +32,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@NoArgsConstructor
 public class BeerOrderLine extends BaseEntity {
+
+    public BeerOrderLine() { }
 
     @Builder
     public BeerOrderLine(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate,
