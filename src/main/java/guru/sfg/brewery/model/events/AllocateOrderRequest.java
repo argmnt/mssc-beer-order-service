@@ -1,16 +1,15 @@
 package guru.sfg.brewery.model.events;
 
 import guru.sfg.brewery.model.BeerOrderDto;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.Builder;
+import lombok.*;
 import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class AllocateOrderRequest {
 
-    private final BeerOrderDto beerOrderDto;
+    private BeerOrderDto beerOrderDto;
 }

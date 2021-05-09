@@ -27,7 +27,7 @@ public class ValidateOrderAction implements Action<BeerOrderStatusEnum, BeerOrde
 
     private final BeerOrderRepository beerOrderRepository;
 
-    private BeerOrderMapper beerOrderMapper;
+    private final BeerOrderMapper beerOrderMapper;
 
     private final JmsTemplate jmsTemplate;
 

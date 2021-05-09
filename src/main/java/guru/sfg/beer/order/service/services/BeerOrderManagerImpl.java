@@ -4,6 +4,7 @@ import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderEventEnum;
 import guru.sfg.beer.order.service.domain.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
+import guru.sfg.beer.order.service.sm.BeerOrderStateChangeInterceptor;
 import guru.sfg.brewery.model.BeerOrderDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
@@ -12,6 +13,7 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,14 +28,21 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
     private final BeerOrderRepository beerOrderRepository;
 
+    private final BeerOrderStateChangeInterceptor beerOrderStateChangeInterceptor;
+
     @Override
     public BeerOrder newBeerOrder(BeerOrder beerOrder) {
         beerOrder.setId(null);
         beerOrder.setOrderStatus(BeerOrderStatusEnum.NEW);
 
-        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+        BeerOrder savedBeerOrder = this.saveBeerOrder(beerOrder);
         sendBeerOrderEvent(savedBeerOrder, BeerOrderEventEnum.VALIDATE_ORDER);
         return savedBeerOrder;
+    }
+
+    @Transactional
+    public BeerOrder saveBeerOrder(BeerOrder beerOrder) {
+        return beerOrderRepository.save(beerOrder);
     }
 
     @Override
@@ -46,7 +55,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             //Note: above the state machine automatically update new state of beerOrder with new state via interceptor
             //that's why we need to get new version from db.
             Optional<BeerOrder> optionalUpdatedBeerOrder = beerOrderRepository.findById(beerOrderId);
-            BeerOrder updatedBeerOrder = optionalBeerOrder.orElseThrow(RuntimeException::new);
+            BeerOrder updatedBeerOrder = optionalUpdatedBeerOrder.orElseThrow(RuntimeException::new);
             sendBeerOrderEvent(updatedBeerOrder, BeerOrderEventEnum.ALLOCATE_ORDER);
         } else {
             sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.VALIDATION_FAILED);
@@ -58,7 +67,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
         BeerOrder beerOrder = beerOrderOptional.orElseThrow(RuntimeException::new);
         sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_SUCCESS);
-        updateAllocatedQty(beerOrderDto, beerOrder);
+        updateAllocatedQty(beerOrderDto);
     }
 
     @Override
@@ -66,7 +75,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
         BeerOrder beerOrder = beerOrderOptional.orElseThrow(RuntimeException::new);
         sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_NO_INVENTORY);
-        updateAllocatedQty(beerOrderDto, beerOrder);
+        updateAllocatedQty(beerOrderDto);
     }
 
     @Override
@@ -74,10 +83,10 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
         BeerOrder beerOrder = beerOrderOptional.orElseThrow(RuntimeException::new);
         sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.ALLOCATION_FAILED);
-        updateAllocatedQty(beerOrderDto, beerOrder);
+        updateAllocatedQty(beerOrderDto);
     }
 
-    private void updateAllocatedQty(BeerOrderDto beerOrderDto, BeerOrder beerOrder) {
+    private void updateAllocatedQty(BeerOrderDto beerOrderDto) {
         Optional<BeerOrder> allocatedOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
 
         BeerOrder allocatedOrder = allocatedOrderOptional.orElseThrow(RuntimeException::new);
@@ -89,7 +98,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             });
         });
 
-        beerOrderRepository.saveAndFlush(beerOrder);
+        beerOrderRepository.saveAndFlush(allocatedOrder);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEventEnum) {
@@ -105,6 +114,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         sm.stop();
 
         sm.getStateMachineAccessor().doWithAllRegions(sma -> {
+            sma.addStateMachineInterceptor(beerOrderStateChangeInterceptor);
             sma.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(),
                     null, null, null));
         });

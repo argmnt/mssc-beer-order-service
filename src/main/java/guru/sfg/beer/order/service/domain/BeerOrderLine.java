@@ -45,6 +45,7 @@ public class BeerOrderLine extends BaseEntity {
         this.beerId = beerId;
         this.orderQuantity = orderQuantity;
         this.quantityAllocated = quantityAllocated;
+        this.upc = upc;
     }
 
     @ManyToOne
