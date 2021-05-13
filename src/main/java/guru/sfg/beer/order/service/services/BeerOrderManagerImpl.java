@@ -86,6 +86,14 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         updateAllocatedQty(beerOrderDto);
     }
 
+    @Override
+    public void beerOrderPickedUp(UUID id) {
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(id);
+        BeerOrder beerOrder = beerOrderOptional.orElseThrow(RuntimeException::new);
+
+        sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.BEERORDER_PICKED_UP);
+    }
+
     private void updateAllocatedQty(BeerOrderDto beerOrderDto) {
         Optional<BeerOrder> allocatedOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
 
