@@ -127,11 +127,7 @@
             <artifactId>spring-boot-starter-artemis</artifactId>
             <version>2.3.10.RELEASE</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.activemq</groupId>
-            <artifactId>artemis-jms-server</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>

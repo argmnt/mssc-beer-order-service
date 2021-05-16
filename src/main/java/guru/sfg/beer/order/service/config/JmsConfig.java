@@ -18,6 +18,10 @@ public class JmsConfig {
 
     public static final String ALLOCATE_ORDER_RESPONSE_QUEUE = "allocate-order-result";
 
+    public static final String ALLOCATE_FAILURE_QUEUE = "allocation-failure";
+
+    public static final String DEALLOCATE_ORDER_QUEUE = "deallocate-order";
+
     @Bean // Serialize message content to json using TextMessage
     public MessageConverter jacksonJmsMessageConverter(ObjectMapper objectMapper) {
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();

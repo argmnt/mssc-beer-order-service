@@ -7,6 +7,7 @@ import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.sm.BeerOrderStateChangeInterceptor;
 import guru.sfg.brewery.model.BeerOrderDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BeerOrderManagerImpl implements BeerOrderManager {
@@ -92,6 +94,14 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         BeerOrder beerOrder = beerOrderOptional.orElseThrow(RuntimeException::new);
 
         sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.BEERORDER_PICKED_UP);
+    }
+
+    @Override
+    public void cancelOrder(UUID id) {
+        beerOrderRepository.findById(id)
+                .ifPresentOrElse(beerOrder -> {
+                    sendBeerOrderEvent(beerOrder, BeerOrderEventEnum.CANCEL_ORDER);
+                }, () -> log.error("Order Not Found. Id: " + id));
     }
 
     private void updateAllocatedQty(BeerOrderDto beerOrderDto) {

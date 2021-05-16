@@ -19,13 +19,40 @@ public class BeerOrderAllocationListener {
 
     @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_QUEUE)
     public void listen(Message msg) {
+        boolean pendingInventory = false;
+        boolean allocationError = false;
+        boolean sendResponse = true;
 
         AllocateOrderRequest request = (AllocateOrderRequest) msg.getPayload();
-        jmsTemplate.convertAndSend(JmsConfig.ALLOCATE_ORDER_RESPONSE_QUEUE,
-                AllocateOrderResult.builder()
-                        .pendingInventory(false)
-                        .allocationError(false)
-                        .beerOrderDto(request.getBeerOrderDto())
-                        .build());
+
+        //set pending inventory.
+        if(request.getBeerOrderDto().getCustomerRef() != null && request.getBeerOrderDto().getCustomerRef().equals("partial-allocation")) {
+            pendingInventory = true;
+        }
+
+        // set allocation error.
+        if(request.getBeerOrderDto().getCustomerRef() != null && request.getBeerOrderDto().getCustomerRef().equals("fail-allocation")) {
+            allocationError = true;
+        } else if (request.getBeerOrderDto().getCustomerRef() != null && request.getBeerOrderDto().getCustomerRef().equals("dont-allocate")) {
+            sendResponse = false;
+        }
+
+        boolean finalPendingInventory = pendingInventory;
+        request.getBeerOrderDto().getBeerOrderLines().forEach(beerOrderLineDto -> {
+            if (finalPendingInventory) {
+                beerOrderLineDto.setQuantityAllocated(beerOrderLineDto.getOrderQuantity() - 1);
+            } else {
+                beerOrderLineDto.setQuantityAllocated(beerOrderLineDto.getOrderQuantity());
+            }
+        });
+
+        if (sendResponse) {
+            jmsTemplate.convertAndSend(JmsConfig.ALLOCATE_ORDER_RESPONSE_QUEUE,
+                    AllocateOrderResult.builder()
+                            .pendingInventory(finalPendingInventory)
+                            .allocationError(allocationError)
+                            .beerOrderDto(request.getBeerOrderDto())
+                            .build());
+        }
     }
 }

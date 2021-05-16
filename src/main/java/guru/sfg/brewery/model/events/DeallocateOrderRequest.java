@@ -1,13 +1,15 @@
 package guru.sfg.brewery.model.events;
 
 import guru.sfg.brewery.model.BeerOrderDto;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AllocateOrderRequest {
-
+public class DeallocateOrderRequest {
     private BeerOrderDto beerOrderDto;
 }
